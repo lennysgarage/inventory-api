@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to sync (default: latest)'
+        description: 'Release tag to sync (default: latest). Format: vYYYYMMDD.N (e.g. v20260804.3)'
         required: false
         type: string
 
@@ -60,6 +60,13 @@ jobs:
             fi
           fi
 
+          TAG_RE='^v[0-9]{8}\.[0-9]+$'
+          if [[ ! "${TARGET}" =~ $TAG_RE ]]; then
+            echo "Invalid schema release tag: ${TARGET}"
+            echo "Expected format: vYYYYMMDD.N (e.g. v20260804.3)"
+            exit 1
+          fi
+
           echo "target=${TARGET}" >> "${GITHUB_OUTPUT}"
           echo "Target release tag: ${TARGET}"
 
@@ -88,8 +95,15 @@ jobs:
           git checkout -B "${BRANCH}" origin/main
 
           # Pin SCHEMA_VERSION to the target release
-          sed -i "s/^SCHEMA_VERSION=.*/SCHEMA_VERSION=${TARGET}/" Makefile
+          awk -v ver="${TARGET}" '
+            /^SCHEMA_VERSION=/ { print "SCHEMA_VERSION=" ver; next }
+            { print }
+          ' Makefile > Makefile.tmp && mv Makefile.tmp Makefile
 
+          # Overlay copy is additive so non-starlark resource types stay in
+          # tree. When every type is onboarded to starlark-unified-schema,
+          # update `make update-schemas` to replace managed paths (delete then
+          # copy) so files removed upstream do not remain in the local cache.
           make update-schemas SCHEMA_VERSION="${TARGET}" SCHEMA_REPO="${SCHEMA_REPO}"
 
           git add Makefile data/schema/resources resources.tar.gz schema_cache.json deploy/kessel-inventory-ephem.yaml
@@ -108,7 +122,7 @@ jobs:
           Automated schema sync from [\`${SCHEMA_REPO}\`](https://github.com/${SCHEMA_REPO}) release \`${TARGET}\`.
 
           - Bumps \`SCHEMA_VERSION\` to \`${TARGET}\`
-          - Runs \`make update-schemas\` (downloads \`jsonschema.tar.gz\`, extracts feature JSON schemas, rebuilds \`resources.tar.gz\` / \`schema_cache.json\` / ephemeral ConfigMap)
+          - Runs \`make update-schemas\` (downloads \`jsonschema.tar.gz\`, extracts feature JSON schemas and common representations, rebuilds \`resources.tar.gz\` / \`schema_cache.json\` / ephemeral ConfigMap)
 
           ## Test plan
 
