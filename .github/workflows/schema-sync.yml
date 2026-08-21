@@ -100,7 +100,7 @@ jobs:
           fi
 
           git commit -m "chore: sync schemas from ${SCHEMA_REPO}@${TARGET}"
-          git push -u origin HEAD --force-with-lease
+          git push -u origin HEAD --force
 
           PR_BODY=$(cat <<EOF
           ## Summary
