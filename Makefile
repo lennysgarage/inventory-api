@@ -31,7 +31,7 @@ TITLE:="Kessel Asset Inventory API"
 ifeq ($(VERSION),)
 VERSION:=$(shell git describe --tags --always)
 endif
-SCHEMA_REPO ?= project-kessel/starlark-unified-schema
+SCHEMA_REPO ?= lennysgarage/starlark-unified-schema
 SCHEMA_VERSION=unset
 
 # Postgres configuration
