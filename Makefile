@@ -32,7 +32,7 @@ ifeq ($(VERSION),)
 VERSION:=$(shell git describe --tags --always)
 endif
 SCHEMA_REPO ?= lennysgarage/starlark-unified-schema
-SCHEMA_VERSION=unset
+SCHEMA_VERSION=v20260824.2
 
 # Postgres configuration
 DB_PORT ?= 5435
